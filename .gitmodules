@@ -1,0 +1,3 @@
+[submodule "proglog"]
+	path = proglog
+	url = https://github.com/YoshikiShibata/proglog.git
