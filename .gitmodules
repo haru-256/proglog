@@ -1,3 +1,6 @@
 [submodule "proglog"]
 	path = proglog
 	url = https://github.com/YoshikiShibata/proglog.git
+[submodule "official"]
+	path = official
+	url = https://github.com/YoshikiShibata/proglog.git
