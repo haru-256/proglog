@@ -2,7 +2,9 @@ package server
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -10,6 +12,9 @@ import (
 func NewHTTPServer(addr string) *http.Server {
 	httpsrv := newHTTPServer()
 	r := mux.NewRouter()
+	// ロギングミドルウェアをルーターに登録
+	// このミドルウェアは、この後に定義される全てのルートに適用されます。
+	r.Use(loggingMiddleware)
 	r.HandleFunc("/", httpsrv.handleProduce).Methods("POST")
 	r.HandleFunc("/", httpsrv.handleConsume).Methods("GET")
 	return &http.Server{Addr: addr, Handler: r}
@@ -83,11 +88,19 @@ type ConsumeResponse struct {
 func closeRequestBody(r *http.Request) {
 	if r.Body != nil {
 		if err := r.Body.Close(); err != nil {
-			// It's good practice to log this error.
-			// For example, using the log package:
-			// log.Printf("error closing request body: %v", err)
-			// For now, we'll just acknowledge the error to satisfy the linter.
-			_ = err // Avoid "declared and not used" error if not logging.
+			slog.Error("error closing request body", "error", err)
 		}
 	}
+}
+
+// loggingMiddleware はリクエストの情報をログに出力するミドルウェアです。
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		// 次のハンドラを呼び出す
+		next.ServeHTTP(w, r)
+		duration := time.Since(start)
+		// ログ出力
+		slog.Debug("request", "method", r.Method, "uri", r.RequestURI, "body", r.Body, "remote_addr", r.RemoteAddr, "user_agent", r.UserAgent(), "duration", duration)
+	})
 }
