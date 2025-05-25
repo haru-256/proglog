@@ -24,6 +24,18 @@ fmt: ## Run formatter
 init: ## Initialize project
 	cobra-cli init
 
+.PHONY: compile
+compile: ## Generate protobuf files
+	protoc api/v1/*.proto \
+		--go_out=. \
+		--go_opt=paths=source_relative \
+		--proto_path=.
+
+.PHONY: install
+install: ## Install dependencies
+	go mod tidy
+	go install google.golang.org/protobuf/...@latest
+
 .PHONY: build
 build: ## Build project
 	CGO_ENABLED=0 GO111MODULE=on GOOS=$(GOOS) GOARCH=$(GOARCH) go build -o ./bin/main
