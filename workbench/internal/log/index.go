@@ -1,6 +1,7 @@
 package log
 
 import (
+	"fmt"
 	"io"
 	"os"
 
@@ -63,7 +64,7 @@ func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 		return 0, 0, io.EOF
 	}
 	if in < -1 {
-		return 0, 0, io.EOF
+		return 0, 0, fmt.Errorf("index: invalid index %d", in)
 	}
 	var indexOff uint32 // indexOff is the offset of index
 	var indexPos uint64 // indexPos is the position in the index file

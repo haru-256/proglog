@@ -12,7 +12,7 @@ var (
 )
 
 const (
-	lenWidth = 8
+	lenWidth = 8 // lenWidth is the number of bytes used to store the length of each record.
 )
 
 type store struct {
