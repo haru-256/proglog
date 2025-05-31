@@ -69,3 +69,38 @@ func testReadAt(t *testing.T, s *store) {
 		off += int64(size)
 	}
 }
+
+func TestStoreClos(t *testing.T) {
+	f, err := os.CreateTemp("", "store_close_test")
+	require.NoError(t, err)
+	defer os.Remove(f.Name())
+	s, err := newStore(f)
+	require.NoError(t, err)
+	_, _, err = s.Append(write)
+	require.NoError(t, err)
+
+	// storeのbufのデフォルトサイズは 4096バイト。bufferは満杯になるか、Flushされたタイミングで値を書き込むので、この時点ではsizeは0
+	f, beforeSIze, err := openFile(f.Name())
+	require.NoError(t, err)
+
+	err = s.Close() // Close時にbufの内容: write がファイルに書き込まれる
+	require.NoError(t, err)
+
+	_, afterSize, err := openFile(f.Name())
+	require.NoError(t, err)
+	require.True(t, afterSize > beforeSIze)
+}
+
+func openFile(name string) (file *os.File, size int64, err error) {
+	f, err := os.OpenFile(name, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0600)
+	if err != nil {
+		return nil, 0, err
+	}
+	fi, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, 0, err
+	}
+
+	return f, fi.Size(), nil
+}
