@@ -11,7 +11,8 @@ import (
 )
 
 func TestSegment(t *testing.T) {
-	dir, _ := os.MkdirTemp("", "segment_test")
+	dir, err := os.MkdirTemp("", "segment_test")
+	require.NoError(t, err, "expected no error when creating temporary directory")
 	t.Cleanup(func() {
 		os.RemoveAll(dir)
 	})
