@@ -10,6 +10,10 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+// segment represents a single segment of the log containing a store and index file.
+// A segment maintains a contiguous range of log records, with the store file
+// containing the actual record data and the index file containing offset-position mappings.
+// Each segment has a base offset and tracks the next available offset for new records.
 type segment struct {
 	store                  *store
 	index                  *index
@@ -17,6 +21,10 @@ type segment struct {
 	config                 Config
 }
 
+// newSegment creates a new segment with the specified base offset.
+// It opens or creates both store and index files in the given directory,
+// and initializes the segment's nextOffset by reading the last entry from the index.
+// If the index is empty, nextOffset is set to the base offset.
 func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
 	s := &segment{
 		baseOffset: baseOffset,
@@ -93,12 +101,19 @@ func (s *segment) Read(off uint64) (*api.Record, error) {
 	return record, err
 }
 
+// IsMaxed checks if the segment has reached its maximum capacity.
+// A segment is considered maxed if either the store size, index size,
+// or index entry count has reached the configured limits.
+// This is used to determine when a new segment should be created.
 func (s *segment) IsMaxed() bool {
 	return s.store.size >= s.config.Segment.MaxStoreBytes ||
 		s.index.size >= s.config.Segment.MaxIndexBytes ||
 		s.index.isMaxed()
 }
 
+// Remove closes the segment and deletes both the store and index files from disk.
+// This operation is irreversible and should be used with caution.
+// It ensures proper cleanup by closing the segment before removing the files.
 func (s *segment) Remove() error {
 	if err := s.Close(); err != nil {
 		return fmt.Errorf("close store: %w", err)
@@ -112,6 +127,9 @@ func (s *segment) Remove() error {
 	return nil
 }
 
+// Close closes both the store and index files of the segment.
+// It ensures that all buffered data is written to disk and releases file handles.
+// This method should be called when the segment is no longer needed.
 func (s *segment) Close() error {
 	if err := s.store.Close(); err != nil {
 		return fmt.Errorf("close store: %w", err)

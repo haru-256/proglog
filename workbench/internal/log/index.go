@@ -9,19 +9,33 @@ import (
 )
 
 const (
+	// offWidth is the number of bytes used to store the record offset in the index.
+	// This 4-byte field stores the relative offset of a record within a segment.
 	offWidth uint64 = 4
+
+	// posWidth is the number of bytes used to store the position in the store file.
+	// This 8-byte field stores the absolute position where the record is stored.
 	posWidth uint64 = 8
+
+	// entWidth is the total width of each index entry in bytes.
+	// Each entry consists of an offset (4 bytes) and a position (8 bytes).
 	entWidth uint64 = offWidth + posWidth
 )
 
-// indexのファイルには、recordのオフセットと、recordの内容が書き込まれたstoreファイルの位置のペアが格納される
-// index自体の次の書き込み位置は、indexのサイズで管理される
+// index represents a memory-mapped index file that stores offset-position pairs.
+// It maintains efficient lookups for record positions in the corresponding store file.
+// The index file contains pairs of record offsets and their positions in the store,
+// with the next write position managed by the size field.
 type index struct {
 	file *os.File
 	mmap gommap.MMap
 	size uint64 // size of the index in bytes
 }
 
+// newIndex creates a new index instance from an existing file.
+// It initializes the index with the file's current size and sets up memory mapping
+// for efficient random access. The file is truncated to the maximum index size
+// specified in the configuration to ensure consistent memory mapping.
 func newIndex(f *os.File, c Config) (*index, error) {
 	idx := &index{
 		file: f,
@@ -43,6 +57,9 @@ func newIndex(f *os.File, c Config) (*index, error) {
 	return idx, nil
 }
 
+// Close synchronizes the memory-mapped data to disk and closes the index file.
+// It ensures all pending writes are flushed and truncates the file to the actual
+// data size before closing. This method should be called before the index is discarded.
 func (i *index) Close() error {
 	if err := i.mmap.Sync(gommap.MS_SYNC); err != nil {
 		return err
@@ -97,11 +114,17 @@ func (i *index) Write(off uint32, pos uint64) error {
 	return nil
 }
 
+// isMaxed checks if the index has reached its maximum capacity.
+// It returns true if adding another entry would exceed the memory-mapped region size.
+// This is used to determine when a new segment should be created.
 func (i *index) isMaxed() bool {
 	// 次のエントリを追加するために必要なサイズが、現在のmmapのサイズより小さいかどうかを確認
 	return uint64(len(i.mmap)) < i.size+entWidth
 }
 
+// Name returns the name of the index file.
+// This method provides access to the underlying file name for debugging
+// and logging purposes.
 func (i *index) Name() string {
 	return i.file.Name()
 }
