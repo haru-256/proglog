@@ -175,6 +175,9 @@ func (l *Log) Reset() error {
 func (l *Log) LowestOffset() (uint64, error) {
 	l.mu.RLock()
 	defer l.mu.RUnlock()
+	if len(l.segments) == 0 {
+		return 0, fmt.Errorf("log contains no segments from which to determine the lowest offset")
+	}
 	return l.segments[0].baseOffset, nil
 }
 
@@ -191,6 +194,9 @@ func (l *Log) HighestOffset() (uint64, error) {
 // without acquiring locks. It calculates the offset based on the
 // nextOffset of the last segment, returning 0 if no records exist.
 func (l *Log) highestOffset() (uint64, error) {
+	if len(l.segments) == 0 {
+		return 0, fmt.Errorf("log contains no segments from which to determine the highest offset")
+	}
 	off := l.segments[len(l.segments)-1].nextOffset
 	if off == 0 {
 		return 0, nil
