@@ -35,7 +35,7 @@ func newSegment(dir string, baseOffset uint64, c Config) (*segment, error) {
 	}
 	indexFile, err := os.OpenFile(
 		filepath.Join(dir, fmt.Sprintf("%d%s", baseOffset, ".index")),
-		os.O_RDWR|os.O_CREATE, // why not append?
+		os.O_RDWR|os.O_CREATE, // O_APPEND is not used because the index file requires precise control over read and write offsets, which is incompatible with appending all writes to the end of the file.
 		0600,
 	)
 	if err != nil {
