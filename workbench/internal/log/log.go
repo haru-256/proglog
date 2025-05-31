@@ -54,7 +54,10 @@ func (l *Log) setup() error {
 	var baseOffsets []uint64
 	for _, file := range files {
 		offStr := strings.TrimSuffix(file.Name(), path.Ext(file.Name()))
-		off, _ := strconv.ParseUint(offStr, 10, 64)
+		off, err := strconv.ParseUint(offStr, 10, 64)
+		if err != nil {
+			return fmt.Errorf("parse base offset %q: %w", offStr, err)
+		}
 		baseOffsets = append(baseOffsets, off)
 	}
 	slices.SortFunc(baseOffsets, func(i, j uint64) int {
