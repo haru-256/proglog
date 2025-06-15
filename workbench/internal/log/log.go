@@ -53,6 +53,7 @@ func (l *Log) setup() error {
 	}
 	var baseOffsets []uint64
 	for _, file := range files {
+// Assumes file.Name() is in the format "{baseOffset}.store" or "{baseOffset}.index"
 		offStr := strings.TrimSuffix(file.Name(), path.Ext(file.Name()))
 		off, err := strconv.ParseUint(offStr, 10, 64)
 		if err != nil {
@@ -133,7 +134,7 @@ func (l *Log) Read(off uint64) (*api.Record, error) {
 		}
 	}
 	if s == nil || s.nextOffset <= off {
-		return nil, fmt.Errorf("offset out of range: %d", off)
+		return nil, api.ErrOffsetOutOfRange{Offset: off}
 	}
 	return s.Read(off)
 }

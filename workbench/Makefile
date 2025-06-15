@@ -28,13 +28,16 @@ init: ## Initialize project
 compile: ## Generate protobuf files
 	protoc api/v1/*.proto \
 		--go_out=. \
+		--go-grpc_out=. \
 		--go_opt=paths=source_relative \
+		--go-grpc_opt=paths=source_relative \
 		--proto_path=.
 
 .PHONY: install
 install: ## Install dependencies
 	go mod tidy
-	go install google.golang.org/protobuf/...@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
 
 .PHONY: build
 build: ## Build project

@@ -75,7 +75,7 @@ func (i *index) Close() error {
 
 // Read reads an entry from the index.
 // in is the index offset to read, or -1 to read the last entry.
-// out is the offset of the record in the store file, and pos is the position in the index file.
+// out is the offset of the record in the store file, and pos is the position in the store file.
 func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 	if i.size == 0 {
 		return 0, 0, io.EOF
@@ -100,7 +100,7 @@ func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 }
 
 // Write adds a new entry to the index.
-// off is the offset of the record in the store file, and pos is the position in the index file.
+// off is the offset of the record in the store file, and pos is the position in the store file.
 // It returns io.EOF if the index is full and cannot accommodate more entries.
 func (i *index) Write(off uint32, pos uint64) error {
 	if i.isMaxed() {
