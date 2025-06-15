@@ -31,7 +31,7 @@ func NewGRPCServer(config *Config) (*grpc.Server, error) {
 var _ api.LogServer = (*grpcServer)(nil)
 
 type grpcServer struct {
-	api.UnimplementedLogServer // UnimplementedLogServerを埋め込むことで前方互換性の確保を行い、逐次的なAPIの実装を可能にする
+api.UnimplementedLogServer // Embed UnimplementedLogServer to ensure forward compatibility.
 	*Config
 }
 
