@@ -53,7 +53,7 @@ func (l *Log) setup() error {
 	}
 	var baseOffsets []uint64
 	for _, file := range files {
-		// file.Name() は "{baseOffset}.store" または "{baseOffset}.index" の形式であることを想定
+// Assumes file.Name() is in the format "{baseOffset}.store" or "{baseOffset}.index"
 		offStr := strings.TrimSuffix(file.Name(), path.Ext(file.Name()))
 		off, err := strconv.ParseUint(offStr, 10, 64)
 		if err != nil {
