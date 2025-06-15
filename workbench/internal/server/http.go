@@ -1,3 +1,5 @@
+// Package server provides HTTP server implementation for the proglog service.
+// It includes in-memory log storage and basic CRUD operations.
 package server
 
 import (
@@ -9,6 +11,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+// NewHTTPServer creates and configures a new HTTP server with the specified address.
+// It sets up routes for producing and consuming log records, and applies logging middleware.
 func NewHTTPServer(addr string) *http.Server {
 	httpsrv := newHTTPServer()
 	r := mux.NewRouter()
@@ -20,12 +24,16 @@ func NewHTTPServer(addr string) *http.Server {
 	return &http.Server{Addr: addr, Handler: r}
 }
 
+// httpServer handles HTTP requests for log operations.
+// It wraps a Log instance to provide RESTful API endpoints.
 type httpServer struct{ Log *Log }
 
 func newHTTPServer() *httpServer {
 	return &httpServer{Log: NewLog()}
 }
 
+// handleProduce processes POST requests to append new records to the log.
+// It expects a ProduceRequest in the request body and returns a ProduceResponse with the assigned offset.
 func (s *httpServer) handleProduce(w http.ResponseWriter, r *http.Request) {
 	defer closeRequestBody(r)
 	var req ProduceRequest
@@ -47,6 +55,8 @@ func (s *httpServer) handleProduce(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleConsume processes GET requests to retrieve records from the log.
+// It expects a ConsumeRequest in the request body and returns a ConsumeResponse with the requested record.
 func (s *httpServer) handleConsume(w http.ResponseWriter, r *http.Request) {
 	defer closeRequestBody(r)
 	var req ConsumeRequest
@@ -72,19 +82,28 @@ func (s *httpServer) handleConsume(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ProduceRequest represents the request payload for appending a record to the log.
 type ProduceRequest struct {
-	Record Record `json:"record"`
-}
-type ProduceResponse struct {
-	Offset uint64 `json:"offset"`
-}
-type ConsumeRequest struct {
-	Offset uint64 `json:"offset"`
-}
-type ConsumeResponse struct {
-	Record Record `json:"record"`
+	Record Record `json:"record"` // The record to be appended
 }
 
+// ProduceResponse represents the response payload after successfully appending a record.
+type ProduceResponse struct {
+	Offset uint64 `json:"offset"` // The assigned offset of the appended record
+}
+
+// ConsumeRequest represents the request payload for retrieving a record from the log.
+type ConsumeRequest struct {
+	Offset uint64 `json:"offset"` // The offset of the record to retrieve
+}
+
+// ConsumeResponse represents the response payload containing the requested record.
+type ConsumeResponse struct {
+	Record Record `json:"record"` // The retrieved record
+}
+
+// closeRequestBody safely closes the request body and logs any errors.
+// This function should be called with defer to ensure proper resource cleanup.
 func closeRequestBody(r *http.Request) {
 	if r.Body != nil {
 		if err := r.Body.Close(); err != nil {
@@ -93,7 +112,7 @@ func closeRequestBody(r *http.Request) {
 	}
 }
 
-// loggingMiddleware はリクエストの情報をログに出力するミドルウェアです。
+// loggingMiddleware is middleware that logs request information including method, URI, and duration.
 func loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
