@@ -25,8 +25,9 @@ type Config struct {
 
 // NewGRPCServer creates and configures a new gRPC server.
 // It initializes the server, registers the log service, and returns the server instance.
-func NewGRPCServer(config *Config) (*grpc.Server, error) {
-	gsrv := grpc.NewServer()
+// The server uses the provided configuration and optional gRPC server options (e.g., TLS settings).
+func NewGRPCServer(config *Config, grpcOpts ...grpc.ServerOption) (*grpc.Server, error) {
+	gsrv := grpc.NewServer(grpcOpts...)
 	srv, err := newgrpcServer(config)
 	if err != nil {
 		return nil, err
