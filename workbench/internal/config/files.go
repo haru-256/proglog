@@ -19,6 +19,13 @@ var (
 	// ServerKeyFile is the path to the server's private key file.
 	// Contains the private key corresponding to the server certificate.
 	ServerKeyFile = configFile("server-key.pem")
+
+	RootClientCertFile   = configFile("root-client.pem")
+	RootClientKeyFile    = configFile("root-client-key.pem")
+	NobodyClientCertFile = configFile("nobody-client.pem")
+	NobodyClientKeyFile  = configFile("nobody-client-key.pem")
+	ACLModelFile         = configFile("model.conf")
+	ACLPolicyFile        = configFile("policy.csv")
 )
 
 // configFile returns the full path to a configuration file.
