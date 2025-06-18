@@ -220,7 +220,7 @@ func authenticate(ctx context.Context) (context.Context, error) {
 		return ctx, status.New(codes.Unknown, "couldn't get peer info").Err()
 	}
 	if peer.AuthInfo == nil {
-		return context.WithValue(ctx, subjectContextKey{}, ""), nil
+		return ctx, status.New(codes.Unauthenticated, "no authentication info found").Err()
 	}
 	tlsInfo := peer.AuthInfo.(credentials.TLSInfo)
 	// VerifiedChainsが空 = クライアント証明書が検証されていない
