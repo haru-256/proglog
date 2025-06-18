@@ -57,6 +57,7 @@ func setupTest(t *testing.T, fn func(*Config)) (
 		KeyFile:       config.ServerKeyFile,
 		CAFile:        config.CAFile,
 		ServerAddress: l.Addr().String(),
+		Server:        false, // TODO: 相互TLSを有効にしたらたらtrueにする
 	})
 	require.NoError(t, err)
 	serverCreds := credentials.NewTLS(serverTLSConfig)

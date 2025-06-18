@@ -33,7 +33,7 @@ func SetupTLSConfig(cfg TLSConfig) (*tls.Config, error) {
 
 		// CA証明書プールを作成してCA証明書を追加
 		ca := x509.NewCertPool()
-		ok := ca.AppendCertsFromPEM([]byte(b))
+		ok := ca.AppendCertsFromPEM(b)
 		if !ok {
 			return nil, fmt.Errorf("failed to parse CA certificate %q", cfg.CAFile)
 		}
