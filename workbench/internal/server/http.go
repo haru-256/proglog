@@ -12,7 +12,15 @@ import (
 )
 
 // NewHTTPServer creates and configures a new HTTP server with the specified address.
-// It sets up routes for producing and consuming log records, and applies logging middleware.
+// It sets up RESTful API routes for producing and consuming log records, applies
+// logging middleware to all requests, and returns a configured HTTP server.
+//
+// API Endpoints:
+//   - POST /  : Append a new record to the log (handleProduce)
+//   - GET  /  : Retrieve a record by offset (handleConsume)
+//
+// The server includes request logging middleware that captures method, URI,
+// duration, and other request details for debugging and monitoring.
 func NewHTTPServer(addr string) *http.Server {
 	httpsrv := newHTTPServer()
 	r := mux.NewRouter()
@@ -25,7 +33,8 @@ func NewHTTPServer(addr string) *http.Server {
 }
 
 // httpServer handles HTTP requests for log operations.
-// It wraps a Log instance to provide RESTful API endpoints.
+// It wraps a Log instance to provide RESTful API endpoints for log management.
+// The server uses an in-memory log implementation suitable for development and testing.
 type httpServer struct{ Log *Log }
 
 func newHTTPServer() *httpServer {
@@ -33,7 +42,16 @@ func newHTTPServer() *httpServer {
 }
 
 // handleProduce processes POST requests to append new records to the log.
-// It expects a ProduceRequest in the request body and returns a ProduceResponse with the assigned offset.
+// It expects a JSON-encoded ProduceRequest in the request body containing the record to append.
+// On success, it returns a JSON-encoded ProduceResponse with the assigned offset.
+//
+// Request format:  {"record": {"value": "base64-encoded-data"}}
+// Response format: {"offset": 123}
+//
+// HTTP Status Codes:
+//   - 200: Success - record appended successfully
+//   - 400: Bad Request - invalid JSON or malformed request
+//   - 500: Internal Server Error - log operation failed
 func (s *httpServer) handleProduce(w http.ResponseWriter, r *http.Request) {
 	defer closeRequestBody(r)
 	var req ProduceRequest
@@ -56,7 +74,17 @@ func (s *httpServer) handleProduce(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleConsume processes GET requests to retrieve records from the log.
-// It expects a ConsumeRequest in the request body and returns a ConsumeResponse with the requested record.
+// It expects a JSON-encoded ConsumeRequest in the request body specifying the offset to read.
+// On success, it returns a JSON-encoded ConsumeResponse containing the requested record.
+//
+// Request format:  {"offset": 123}
+// Response format: {"record": {"value": "base64-encoded-data", "offset": 123}}
+//
+// HTTP Status Codes:
+//   - 200: Success - record retrieved successfully
+//   - 400: Bad Request - invalid JSON or malformed request
+//   - 404: Not Found - requested offset does not exist
+//   - 500: Internal Server Error - log operation failed
 func (s *httpServer) handleConsume(w http.ResponseWriter, r *http.Request) {
 	defer closeRequestBody(r)
 	var req ConsumeRequest
