@@ -3,11 +3,19 @@ package server
 
 import (
 	"context"
+	"time"
 
 	api "github.com/haru-256/proglog/api/v1"
+	"go.opencensus.io/plugin/ocgrpc"
+	"go.opencensus.io/stats/view"
+	"go.opencensus.io/trace"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_auth "github.com/grpc-ecosystem/go-grpc-middleware/auth"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	grpc_ctxtags "github.com/grpc-ecosystem/go-grpc-middleware/tags"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -60,15 +68,44 @@ const (
 //
 // Returns the configured gRPC server ready to serve requests.
 func NewGRPCServer(config *Config, grpcOpts ...grpc.ServerOption) (*grpc.Server, error) {
+	// zapロガーを"server"という名前で初期化
+	logger := zap.L().Named("server")
+	// ログに出力するリクエスト処理時間をナノ秒単位に設定
+	zapOpts := []grpc_zap.Option{
+		grpc_zap.WithDurationField(
+			func(duration time.Duration) zapcore.Field {
+				return zap.Int64("grpc.time_ns", duration.Nanoseconds())
+			},
+		),
+	}
+
+	// OpenCensusによる分散トレーシングを有効化（全リクエストをサンプリング）
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+
+	// gRPCサーバー用の標準メトリクス（レイテンシ、リクエスト数など）のビューを登録
+	err := view.Register(ocgrpc.DefaultServerViews...)
+	if err != nil {
+		return nil, err
+	}
+
+	// gRPCサーバーにインターセプタ（ミドルウェア）を設定
 	grpcOpts = append(
 		grpcOpts,
+		// ストリームRPC用のインターセプタ群。定義順に実行される。
 		grpc.StreamInterceptor(
 			grpc_middleware.ChainStreamServer(
-				grpc_auth.StreamServerInterceptor(authenticate),
+				grpc_ctxtags.StreamServerInterceptor(),               // Contextにリクエスト情報をタグとして追加
+				grpc_zap.StreamServerInterceptor(logger, zapOpts...), // zapによるアクセスログの自動記録
+				grpc_auth.StreamServerInterceptor(authenticate),      // クライアント認証の実行
 			)),
+		// Unary RPC用のインターセプタ群
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_ctxtags.UnaryServerInterceptor(),
+			grpc_zap.UnaryServerInterceptor(logger, zapOpts...),
 			grpc_auth.UnaryServerInterceptor(authenticate),
 		)),
+		// OpenCensusによるメトリクス収集を有効化
+		grpc.StatsHandler(&ocgrpc.ServerHandler{}),
 	)
 	gsrv := grpc.NewServer(grpcOpts...)
 	srv, err := newgrpcServer(config)
