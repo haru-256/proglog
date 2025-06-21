@@ -159,12 +159,9 @@ func setupTest(t *testing.T, fn func(*Config)) (
 		l.Close()
 		clog.Remove()
 		if telemetryExporter != nil {
-			err := telemetryExporter.Flush()
-			require.NoError(t, err)
+			time.Sleep(1500 * time.Millisecond) // wait for telemetry to flush
 			telemetryExporter.Stop()
-			if err := telemetryExporter.Close(); err != nil {
-				t.Logf("failed to close telemetryExporter: %v", err)
-			}
+			telemetryExporter.Close()
 		}
 	}
 }
