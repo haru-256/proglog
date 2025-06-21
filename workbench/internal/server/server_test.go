@@ -159,7 +159,8 @@ func setupTest(t *testing.T, fn func(*Config)) (
 		l.Close()
 		clog.Remove()
 		if telemetryExporter != nil {
-			time.Sleep(1500 * time.Millisecond)
+			err := telemetryExporter.Flush()
+			require.NoError(t, err)
 			telemetryExporter.Stop()
 			telemetryExporter.Close()
 		}
