@@ -162,7 +162,9 @@ func setupTest(t *testing.T, fn func(*Config)) (
 			err := telemetryExporter.Flush()
 			require.NoError(t, err)
 			telemetryExporter.Stop()
-			telemetryExporter.Close()
+			if err := telemetryExporter.Close(); err != nil {
+				t.Logf("failed to close telemetryExporter: %v", err)
+			}
 		}
 	}
 }
