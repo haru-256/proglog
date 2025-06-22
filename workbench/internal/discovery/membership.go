@@ -7,14 +7,31 @@ import (
 	"go.uber.org/zap"
 )
 
+// Membership manages cluster membership using HashiCorp Serf.
+// It provides service discovery capabilities through a gossip protocol,
+// automatically detecting when nodes join or leave the cluster.
+//
+// The Membership struct embeds configuration and maintains a Serf agent
+// that communicates with other cluster members to propagate membership changes.
+// When membership events occur, the configured Handler is called to take
+// appropriate action (e.g., updating load balancer routes).
 type Membership struct {
-	Config
-	handler Handler
-	serf    *serf.Serf
-	events  chan serf.Event
-	logger  *zap.Logger
+	Config                    // Embedded configuration for node settings
+	handler Handler           // Handler for processing membership events (join/leave)
+	serf    *serf.Serf        // Serf agent for gossip-based cluster membership
+	events  chan serf.Event   // Channel for receiving Serf membership events
+	logger  *zap.Logger       // Logger for membership-related events and errors
 }
 
+// New creates a new Membership instance for cluster discovery and management.
+// It initializes a Serf agent that uses gossip protocol to maintain cluster membership.
+//
+// Parameters:
+//   - handler: Interface for handling cluster membership events (join/leave)
+//   - config: Configuration including node name, bind address, tags, and join addresses
+//
+// Returns a configured Membership instance ready to participate in the cluster,
+// or an error if Serf initialization fails.
 func New(handler Handler, config Config) (*Membership, error) {
 	c := &Membership{
 		Config:  config,
