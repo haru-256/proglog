@@ -118,7 +118,7 @@ func (m *Membership) handleJoin(member serf.Member) {
 
 func (m *Membership) handleLeave(member serf.Member) {
 	if err := m.handler.Leave(member.Name); err != nil {
-		m.logError(err, "failed to join", member)
+		m.logError(err, "failed to leave", member)
 	}
 }
 
