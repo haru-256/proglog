@@ -16,11 +16,11 @@ import (
 // When membership events occur, the configured Handler is called to take
 // appropriate action (e.g., updating load balancer routes).
 type Membership struct {
-	Config                    // Embedded configuration for node settings
-	handler Handler           // Handler for processing membership events (join/leave)
-	serf    *serf.Serf        // Serf agent for gossip-based cluster membership
-	events  chan serf.Event   // Channel for receiving Serf membership events
-	logger  *zap.Logger       // Logger for membership-related events and errors
+	Config                  // Embedded configuration for node settings
+	handler Handler         // Handler for processing membership events (join/leave)
+	serf    *serf.Serf      // Serf agent for gossip-based cluster membership
+	events  chan serf.Event // Channel for receiving Serf membership events
+	logger  *zap.Logger     // Logger for membership-related events and errors
 }
 
 // New creates a new Membership instance for cluster discovery and management.
@@ -160,7 +160,8 @@ func (m *Membership) logError(err error, msg string, member serf.Member) {
 	)
 }
 
+// Handler defines the interface for handling cluster membership events.
 type Handler interface {
-	Join(name, addr string) error
-	Leave(name string) error
+	Join(name, addr string) error // Join is called when a new member joins the cluster
+	Leave(name string) error      // Leave is called when a member leaves the cluster
 }
