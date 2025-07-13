@@ -39,9 +39,9 @@ type Agent struct {
 // It includes network settings, security configurations, and cluster parameters.
 type Config struct {
 	ServerTLSConfig *tls.Config // TLS configuration for client-server communication
-	PeerTlsConfig   *tls.Config // TLS configuration for peer-to-peer communication
+	PeerTlsConfig   *tls.Config // TLS configuration for peer-to-peer communication for replication
 	DataDir         string      // Directory path for storing log data
-	BindAddr        string      // Network address for binding services
+	BindAddr        string      // Network address for binding services of discovery and replication (IP:port)
 	RPCPort         int         // Port number for gRPC server
 	NodeName        string      // Unique identifier for this node in the cluster
 	StartJoinAddrs  []string    // Addresses of existing cluster members to join on startup
