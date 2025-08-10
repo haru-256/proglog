@@ -1,6 +1,6 @@
 module github.com/haru-256/proglog
 
-go 1.24.3
+go 1.24.5
 
 require (
 	github.com/casbin/casbin v1.9.1
